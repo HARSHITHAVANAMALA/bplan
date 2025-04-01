@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Planner</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-image: url('bp.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+        .budget-container {
+            width: 90%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: block;
+        }
+        input[readonly] {
+            background: #e9ecef;
+        }
+        .budget-output {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 5px;
+        }
+        .custom-expense {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f9f9f9;
+            padding: 10px;
+            margin-top: 8px;
+            border-radius: 5px;
+        }
+        .edit-btn, .delete-btn {
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="budget-container">
+        <h2>Budget Planner</h2>
+        <label>Enter your Income:</label>
+        <input type="number" id="income" placeholder="Enter income">
+
+        <label>Rent (Manual Entry in Rupees):</label>
+        <input type="number" id="rent" placeholder="Enter rent amount">
+
+        <label>Food (30% of Income, capped at ₹10,000):</label>
+        <input type="text" id="food" readonly>
+
+        <div id="customExpenses"></div>
+        <button onclick="addCustomExpense()">Add Custom Expense</button>
+
+        <div class="budget-output">
+            <p><strong>Savings:</strong> ₹<span id="savings">0.00</span></p>
+            <p><strong>Entertainment:</strong> ₹<span id="entertainment">0.00</span></p>
+            <p><strong>Others:</strong> ₹<span id="others">0.00</span></p>
+        </div>
+    </div>
+    <script>
+        let customExpenses = [];
+        document.getElementById("income").addEventListener("input", calculateBudget);
+        document.getElementById("rent").addEventListener("input", calculateBudget);
+
+        function addCustomExpense() {
+            let expenseName = prompt("Enter Expense Name:");
+            if (!expenseName) return;
+            
+            let expenseAmount = parseFloat(prompt("Enter Amount:")) || 0;
+            
+            customExpenses.push({ name: expenseName, amount: expenseAmount });
+            updateCustomExpenses();
+            calculateBudget();
+        }
+
+        function updateCustomExpenses() {
+            let container = document.getElementById("customExpenses");
+            container.innerHTML = "";
+            customExpenses.forEach((exp, index) => {
+                let div = document.createElement("div");
+                div.classList.add("custom-expense");
+                div.innerHTML = `<p><strong>${exp.name}:</strong> ₹<span>${exp.amount.toFixed(2)}</span></p>
+                    <button class="edit-btn" onclick="editExpense(${index})">Edit</button>
+                    <button class="delete-btn" onclick="deleteExpense(${index})">Delete</button>`;
+                container.appendChild(div);
+            });
+        }
+
+        function editExpense(index) {
+            let newAmount = parseFloat(prompt("Enter New Amount:")) || 0;
+            customExpenses[index].amount = newAmount;
+            updateCustomExpenses();
+            calculateBudget();
+        }
+
+        function deleteExpense(index) {
+            customExpenses.splice(index, 1);
+            updateCustomExpenses();
+            calculateBudget();
+        }
+
+        function calculateBudget() {
+            let income = parseFloat(document.getElementById("income").value) || 0;
+            let rent = parseFloat(document.getElementById("rent").value) || 0;
+            
+            let food = Math.min(income * 0.3, 10000);
+            document.getElementById("food").value = food.toFixed(2);
+
+            let entertainment = income * 0.1;
+            let savings = income * 0.2;
+            let customTotal = customExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+            let others = income - (food + rent + entertainment + savings + customTotal);
+
+            if (others < 0) {
+                let deficit = Math.abs(others);
+                if (entertainment >= deficit) {
+                    entertainment -= deficit;
+                } else {
+                    deficit -= entertainment;
+                    entertainment = 0;
+                    savings -= deficit;
+                }
+                others = 0;
+            }
+
+            document.getElementById("savings").textContent = savings.toFixed(2);
+            document.getElementById("entertainment").textContent = entertainment.toFixed(2);
+            document.getElementById("others").textContent = others.toFixed(2);
+        }
+    </script>
+</body>
+</html>
